@@ -1,0 +1,71 @@
+import CalculatorHeader from "@/components/Headers/CalculatorHeader";
+import SegmentedControl, { SegmentedOption } from "@/components/Helper/SegmentedControl";
+import TextField from "@/components/Helper/TextField";
+import FormBlock from "@/components/Wrappers/FormBlock";
+import useGearCalculator from "@/hooks/useGearCalculator";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function GearCalculator() {
+    const { gearType, setGearType, outDia, setOutDia, module, setModule, teeth, setTeeth, cutterType, setCutterType } = useGearCalculator();
+
+    const gearTypeOptions: SegmentedOption[] = [
+        {
+            label: "Straight",
+            value: "straight",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />,
+        },
+        {
+            label: "Helical",
+            value: "helical",
+            icon: (color) => <MaterialCommunityIcons name="sine-wave" size={20} color={color} />,
+        },
+    ];
+
+    const cutterTypeOptions: SegmentedOption[] = [
+        {
+            label: "Module",
+            value: "module",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />,
+        },
+        {
+            label: "DP",
+            value: "dp",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />
+        },
+    ];
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <CalculatorHeader name="Gear Calculator" subtitle="Compute critical dimensions for standard spur and helical gears." />
+
+            <SegmentedControl
+                label="Gear Type"
+                options={gearTypeOptions}
+                selectedValue={gearType}
+                onChange={setGearType}
+            />
+
+            <SegmentedControl
+                label="Cutter Type"
+                options={cutterTypeOptions}
+                selectedValue={cutterType}
+                onChange={setCutterType}
+            />
+
+            <FormBlock>
+                <TextField label="Outer Diameter (OD)" placeholder="20" value={outDia} onChangeText={setOutDia} />
+                <TextField label="Module (m)" placeholder="1" value={module} onChangeText={setModule} />
+                <TextField label="Number of teeth (Z)" placeholder="20" value={teeth} onChangeText={setTeeth} />
+            </FormBlock>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        marginHorizontal: 15,
+    }
+});

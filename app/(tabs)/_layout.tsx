@@ -1,5 +1,7 @@
 import { HapticTab } from "@/components/Buttons/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
+import { COLORS } from "@/constants/theme";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from "expo-router";
 import React from "react";
 
@@ -7,25 +9,60 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: "blue",
+                tabBarActiveTintColor: COLORS.primary,
+                tabBarStyle: {
+                    backgroundColor: COLORS.white,
+                    borderTopColor: COLORS.neutralLight,
+                    borderTopWidth: 1,
+                    paddingBottom: 5,
+                },
                 headerShown: false,
                 tabBarButton: HapticTab,
+                animation: "shift",
             }}
         >
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: "Home",
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+                    title: "Dashboard",
+                    tabBarIcon: ({ color, focused }) => (
+                        <MaterialCommunityIcons
+                            name={focused ? "view-dashboard" : "view-dashboard-outline"}
+                            size={24}
+                            color={focused ? color : COLORS.neutral}
+                        />
+                    ),
                 }}
             />
             <Tabs.Screen
-                name="explore"
+                name="Calculator"
                 options={{
-                    title: "Explore",
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+                    title: "Calculator",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "calculator" : "calculator-outline"} size={24} color={focused ? color : COLORS.neutral} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="Inventory"
+                options={{
+                    title: "Inventory",
+                    tabBarIcon: ({ color, focused }) => (
+                        <MaterialCommunityIcons name="truck-cargo-container" size={24} color={focused ? color : COLORS.neutral} />
+                    ),
+                }}
+            />  
+            <Tabs.Screen
+                name="Settings"
+                options={{
+                    title: "Settings",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "settings" : "settings-outline"} size={24} color={focused ? color : COLORS.neutral} />
+                    ),
                 }}
             />
         </Tabs>
+
     );
 }
+

@@ -1,9 +1,9 @@
 import { Text, View } from "react-native";
 
-export default function ExploreScreen() {
+export default function Inventory() {
     return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>Explore Tab</Text>
+            <Text>Inventory Tab</Text>
         </View>
     );
 }
