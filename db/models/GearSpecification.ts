@@ -20,6 +20,9 @@ export default class GearSpecification extends Model {
     @field("helix_angle") helixAngle: number;
     @field("pitch") pitch?: number;
     @field("calculated_od") calculatedOd: number;
+    @field("face_width") faceWidth?: number;
+    @field("pressure_angle") pressureAngle?: number;
+    @text("hand") hand?: string;
 
     @relation("orders", "order_id") order: Relation<Order>;
     @children("production_setups") productionSetups: Query<ProductionSetup>;

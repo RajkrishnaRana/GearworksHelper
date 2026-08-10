@@ -134,6 +134,7 @@ export default function Orders() {
                     renderItem={renderOrderItem}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 />
             )}
         </SafeAreaView>

@@ -13,7 +13,10 @@ export default class RatioLookupCache extends Model {
   @field('teeth_count') teethCount: number;
   @field('helix_angle') helixAngle: number;
   @field('module_or_dp') moduleOrDp: number;
-  @text('gear_abcd_json') gearAbcdJson: string;
+  @field('gear_a') gearA: number;
+  @field('gear_b') gearB: number;
+  @field('gear_c') gearC: number;
+  @field('gear_d') gearD: number;
   @field('calculation_precision') calculationPrecision: number;
   @date('last_used_at') lastUsedAt: Date;
 

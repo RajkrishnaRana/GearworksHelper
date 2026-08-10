@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import * as SplashScreen from "expo-splash-screen";
-import { SheetProvider } from "react-native-actions-sheet";
 import "@/db";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { SheetProvider } from "react-native-actions-sheet";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -18,9 +18,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="(calculator)" />
             </Stack>
-            <StatusBar style="auto" />
+            <StatusBar style="dark" />
         </SheetProvider>
     );
 }
-
-

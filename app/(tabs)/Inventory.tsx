@@ -9,9 +9,11 @@ import { useInventory } from "@/hooks/useInventory";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { withObservables } from "@nozbe/watermelondb/react";
+import { Q } from "@nozbe/watermelondb";
 import { router } from "expo-router";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useState } from "react";
 
 const filterOptions: SegmentedOption[] = [
     { label: "All", value: "all" },
@@ -22,6 +24,7 @@ const filterOptions: SegmentedOption[] = [
 interface InventoryListProps {
     cutters: Cutter[];
     machines: Machine[];
+    searchQuery?: string;
 }
 
 const InventoryList = ({ cutters, machines }: InventoryListProps) => {
@@ -46,7 +49,9 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
                 style={styles.card}
                 activeOpacity={0.7}
                 onPress={() => {
-                    if (!isMachine) {
+                    if (isMachine) {
+                        router.push(`/add-machine?id=${model.id}`);
+                    } else {
                         router.push(`/add-cutter?id=${model.id}`);
                     }
                 }}
@@ -60,20 +65,23 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
                 </View>
 
                 <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>
-                        {isMachine
-                            ? (model as Machine).name
-                            : `${(model as Cutter).moduleOrDp} ${(model as Cutter).cutterType === "dp" ? "DP" : "Module"} Cutter`}
-                    </Text>
-                    <Text style={styles.cardSubtitle}>
-                        {isMachine
-                            ? `Ratio: ${(model as Machine).indexingRatio} • Feed: ${(model as Machine).feedConstant}`
-                            : `Angle: ${(model as Cutter).angle}° • Bore: ${(model as Cutter).bore}mm • PA: ${(model as Cutter).pressureAngle}°`}
-                    </Text>
-
+                    <Text style={styles.cardTitle}>{isMachine ? (model as Machine).name : (model as Cutter).cutterName}</Text>
+                    {isMachine ? (
+                        <Text style={styles.cardSubtitle}>
+                            {`Ratio: ${(model as Machine).indexingRatio} • Status: ${(model as Machine).status || "active"}`}
+                        </Text>
+                    ) : (
+                        <View style={styles.statsGrid}>
+                            <Text style={styles.statItem}>Angle: {(model as Cutter).angle}</Text>
+                            <Text style={styles.statItem}>Bore: {(model as Cutter).bore}mm</Text>
+                            <Text style={styles.statItem}>Deep: {(model as Cutter).deep}</Text>
+                            <Text style={styles.statItem}>Starts: {(model as Cutter).starts}</Text>
+                            <Text style={styles.statItem}>Pitch: {(model as Cutter).pitch}</Text>
+                        </View>
+                    )}
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>
-                            {isMachine ? "MACHINE" : `Status: ${(model as Cutter).currentStatus}`}
+                            {isMachine ? "MACHINE" : ((model as Cutter).cutterType || "CUTTER").toUpperCase()}
                         </Text>
                     </View>
                 </View>
@@ -89,10 +97,8 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.listContainer}>
             <View style={styles.headerWrapper}>
-                <CalculatorHeader name="Inventory" subtitle="Manage machines and cutters in your shop." />
-
                 <SegmentedControl options={filterOptions} selectedValue={filter} onChange={(val) => setFilter(val as any)} />
             </View>
 
@@ -109,27 +115,84 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
                     renderItem={renderItem}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 />
             )}
 
             <FloatingAddButton onPress={() => setIsAddSheetOpen(true)} />
 
             <AddInventoryActionSheet visible={isAddSheetOpen} onClose={() => setIsAddSheetOpen(false)} />
-        </SafeAreaView>
+        </View>
     );
 };
 
-const EnhancedInventoryList = withObservables([], () => ({
-    cutters: database.get<Cutter>("cutters").query().observe(),
-    machines: database.get<Machine>("machines").query().observe(),
-}))(InventoryList);
+const EnhancedInventoryList = withObservables(['searchQuery'], ({ searchQuery }: { searchQuery: string }) => {
+    let cutterQuery = database.get<Cutter>("cutters").query();
+    let machineQuery = database.get<Machine>("machines").query();
+
+    if (searchQuery && searchQuery.trim() !== "") {
+        const query = searchQuery.trim();
+
+        cutterQuery = database.get<Cutter>("cutters").query(
+            Q.or(
+                Q.where('cutter_name', Q.like(`%${query}%`)),
+                Q.where('pitch', Q.like(`%${query}%`))
+            )
+        );
+
+        machineQuery = database.get<Machine>("machines").query(
+            Q.where('name', Q.like(`%${query}%`))
+        );
+    }
+
+    return {
+        cutters: cutterQuery.observe(),
+        machines: machineQuery.observe(),
+    };
+})(InventoryList);
 
 export default function Inventory() {
-    return <EnhancedInventoryList />;
+    const [searchQuery, setSearchQuery] = useState("");
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.headerWrapper}>
+                <CalculatorHeader name="Inventory" subtitle="Manage machines and cutters in your shop." />
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search" size={20} color={COLORS.neutralDark} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search cutters by name or pitch..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholderTextColor={COLORS.neutralDark}
+                    />
+                </View>
+            </View>
+            <EnhancedInventoryList searchQuery={searchQuery} />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
+    listContainer: { flex: 1 },
+    searchContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: COLORS.neutralBackground,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    searchInput: {
+        flex: 1,
+        marginLeft: 8,
+        fontSize: 15,
+        color: COLORS.black,
+    },
     headerWrapper: { paddingHorizontal: 15 },
     listContent: { paddingHorizontal: 15, paddingBottom: 90, paddingTop: 5 },
     card: {
@@ -160,6 +223,8 @@ const styles = StyleSheet.create({
     cardContent: { flex: 1 },
     cardTitle: { fontSize: 16, fontWeight: "bold", color: COLORS.black },
     cardSubtitle: { fontSize: 13, color: COLORS.neutralDark, marginTop: 2 },
+    statsGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 4 },
+    statItem: { width: "50%", fontSize: 13, color: COLORS.neutralDark, marginBottom: 2 },
     badge: {
         alignSelf: "flex-start",
         backgroundColor: COLORS.neutralBackground,

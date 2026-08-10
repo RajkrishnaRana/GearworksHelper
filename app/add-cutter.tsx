@@ -2,39 +2,47 @@ import SegmentedControl from "@/components/Helper/SegmentedControl";
 import TextField from "@/components/Helper/TextField";
 import FormBlock from "@/components/Wrappers/FormBlock";
 import { COLORS } from "@/constants/theme";
+import { database } from "@/db";
+import { Cutter } from "@/db/models";
 import { useInventory } from "@/hooks/useInventory";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { database } from "@/db";
-import { Cutter } from "@/db/models";
 
 export default function AddCutterScreen() {
     const { addCutter, updateCutter } = useInventory();
     const { id } = useLocalSearchParams<{ id: string }>();
 
-    const [cutterType, setCutterType] = useState<"module" | "dp">("module");
-    const [moduleOrDp, setModuleOrDp] = useState("");
-    const [pressureAngle, setPressureAngle] = useState("");
+    const [cutterName, setCutterName] = useState("");
     const [angle, setAngle] = useState("");
+    const [hand, setHand] = useState("Right Hand"); // Default to Right Hand or Left Hand
+    const [pitch, setPitch] = useState("");
     const [bore, setBore] = useState("");
+    const [deep, setDeep] = useState("");
+    const [starts, setStarts] = useState("1");
+    const [pressureAngle, setPressureAngle] = useState("");
+    const [cutterType, setCutterType] = useState("Bore Cutter"); // Shaft or Bore
     const [diameter, setDiameter] = useState("");
-    const [material, setMaterial] = useState("");
+    const [notes, setNotes] = useState("");
 
     useEffect(() => {
         if (id) {
             const fetchCutter = async () => {
                 try {
                     const cutter = await database.get<Cutter>("cutters").find(id);
-                    setCutterType((cutter.cutterType as "module" | "dp") || "module");
-                    setModuleOrDp(cutter.moduleOrDp.toString());
-                    setPressureAngle(cutter.pressureAngle.toString());
-                    setAngle(cutter.angle.toString());
+                    setCutterName(cutter.cutterName);
+                    setAngle(cutter.angle);
+                    setHand(cutter.hand);
+                    setPitch(cutter.pitch.toString());
                     setBore(cutter.bore.toString());
+                    setDeep(cutter.deep.toString());
+                    setStarts(cutter.starts.toString());
+                    setPressureAngle(cutter.pressureAngle.toString());
+                    setCutterType(cutter.cutterType);
                     if (cutter.diameter) setDiameter(cutter.diameter.toString());
-                    if (cutter.material) setMaterial(cutter.material);
+                    if (cutter.notes) setNotes(cutter.notes);
                 } catch (e) {
                     console.error("Failed to load cutter:", e);
                     Alert.alert("Error", "Could not load cutter details.");
@@ -46,19 +54,23 @@ export default function AddCutterScreen() {
 
     const handleSave = async () => {
         try {
-            if (!moduleOrDp || !pressureAngle || !angle || !bore) {
+            if (!cutterName || !angle || !pitch || !bore || !deep || !starts || !pressureAngle) {
                 Alert.alert("Missing Fields", "Please fill in all required fields.");
                 return;
             }
 
             const payload = {
-                cutterType,
-                moduleOrDp: parseFloat(moduleOrDp),
-                pressureAngle: parseFloat(pressureAngle),
-                angle: parseFloat(angle),
+                cutterName: cutterName.trim(),
+                angle: angle.trim(),
+                hand,
+                pitch: parseFloat(pitch),
                 bore: parseFloat(bore),
+                deep: parseFloat(deep),
+                starts: parseInt(starts, 10),
+                pressureAngle: parseFloat(pressureAngle),
+                cutterType,
                 diameter: diameter ? parseFloat(diameter) : undefined,
-                material: material.trim() || undefined,
+                notes: notes.trim() || undefined,
             };
 
             if (id) {
@@ -84,31 +96,48 @@ export default function AddCutterScreen() {
                 <View style={styles.headerRight} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                 <FormBlock>
+                    <TextField
+                        label="Cutter Name"
+                        placeholder="e.g. Roughing Cutter"
+                        value={cutterName}
+                        onChangeText={setCutterName}
+                        required
+                        keyboardType="default"
+                    />
+                    <SegmentedControl
+                        label="Hand"
+                        options={[
+                            { label: "Right Hand", value: "Right Hand" },
+                            { label: "Left Hand", value: "Left Hand" },
+                        ]}
+                        selectedValue={hand}
+                        onChange={(val) => setHand(val as string)}
+                    />
                     <SegmentedControl
                         label="Cutter Type"
                         options={[
-                            { label: "Module (m)", value: "module" },
-                            { label: "DP", value: "dp" },
+                            { label: "Bore Cutter", value: "Bore Cutter" },
+                            { label: "Shaft Cutter", value: "Shaft Cutter" },
                         ]}
                         selectedValue={cutterType}
-                        onChange={(val) => setCutterType(val as "module" | "dp")}
+                        onChange={(val) => setCutterType(val as string)}
                     />
                     <TextField
-                        label={cutterType === "dp" ? "DP Value" : "Module Value (m)"}
-                        placeholder="e.g. 2.5"
-                        keyboardType="numeric"
-                        value={moduleOrDp}
-                        onChangeText={setModuleOrDp}
-                        required
-                    />
-                    <TextField
-                        label="Angle (°)"
-                        placeholder="e.g. 2"
-                        keyboardType="default"
+                        label="Angle"
+                        placeholder="e.g. 20 degrees"
                         value={angle}
                         onChangeText={setAngle}
+                        required
+                        keyboardType="default"
+                    />
+                    <TextField
+                        label="Circular Pitch (Cp)"
+                        placeholder="e.g. 1.5"
+                        keyboardType="numeric"
+                        value={pitch}
+                        onChangeText={setPitch}
                         required
                     />
                     <TextField
@@ -117,6 +146,22 @@ export default function AddCutterScreen() {
                         keyboardType="numeric"
                         value={bore}
                         onChangeText={setBore}
+                        required
+                    />
+                    <TextField
+                        label="Deep"
+                        placeholder="e.g. 5.5"
+                        keyboardType="numeric"
+                        value={deep}
+                        onChangeText={setDeep}
+                        required
+                    />
+                    <TextField
+                        label="Starts"
+                        placeholder="e.g. 1"
+                        keyboardType="numeric"
+                        value={starts}
+                        onChangeText={setStarts}
                         required
                     />
                     <TextField
@@ -134,7 +179,12 @@ export default function AddCutterScreen() {
                         value={diameter}
                         onChangeText={setDiameter}
                     />
-                    <TextField label="Material (Optional)" placeholder="e.g. HSS" value={material} onChangeText={setMaterial} />
+                    <TextField
+                        label="Notes (Optional)"
+                        placeholder="Additional details..."
+                        value={notes}
+                        onChangeText={setNotes}
+                    />
                 </FormBlock>
 
                 <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>

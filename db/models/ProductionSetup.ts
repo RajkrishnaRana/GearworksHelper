@@ -1,5 +1,5 @@
 import { Model, Relation } from '@nozbe/watermelondb';
-import { date, readonly, relation, text } from '@nozbe/watermelondb/decorators';
+import { date, field, readonly, relation, text } from '@nozbe/watermelondb/decorators';
 import type Cutter from './Cutter';
 import type GearSpecification from './GearSpecification';
 import type Machine from './Machine';
@@ -16,7 +16,13 @@ export default class ProductionSetup extends Model {
   @text('machine_id') machineId: string;
   @text('spec_id') specId: string;
   @text('cutter_id') cutterId: string;
-  @text('gear_settings_abcd') gearSettingsAbcd: string;
+  @field('gear_a') gearA: number;
+  @field('gear_b') gearB: number;
+  @field('gear_c') gearC: number;
+  @field('gear_d') gearD: number;
+  @text('status') status: string;
+  @field('sequence_order') sequenceOrder: number;
+  @field('quantity') quantity?: number;
   @text('operator_notes') operatorNotes?: string;
   @readonly @date('created_at') createdAt: Date;
 

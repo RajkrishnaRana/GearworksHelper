@@ -8,7 +8,7 @@ export default appSchema({
             columns: [
                 { name: "name", type: "string" },
                 { name: "indexing_ratio", type: "number" },
-                { name: "feed_constant", type: "number" },
+                { name: "status", type: "string" },
                 { name: "is_active", type: "boolean" },
                 { name: "created_at", type: "number" },
             ],
@@ -26,15 +26,18 @@ export default appSchema({
         tableSchema({
             name: "cutters",
             columns: [
-                { name: "cutter_type", type: "string" },
-                { name: "module_or_dp", type: "number" },
-                { name: "pressure_angle", type: "number" },
-                { name: "angle", type: "number" },
+                { name: "cutter_name", type: "string" },
+                { name: "angle", type: "string" },
+                { name: "hand", type: "string" },
+                { name: "pitch", type: "number" },
                 { name: "bore", type: "number" },
-                { name: "diameter", type: "number", isOptional: true },
-                { name: "material", type: "string", isOptional: true },
-                { name: "current_status", type: "string" }, // sharp, dull, at_grind_shop
-                { name: "usage_count", type: "number" },
+                { name: "deep", type: "number" },
+                { name: "starts", type: "number" },
+                { name: "pressure_angle", type: "number" },
+                { name: "cutter_type", type: "string" },
+                { name: "diameter", type: "number" },
+                { name: "notes", type: "string" },
+                { name: "created_at", type: "number" },
             ],
         }),
         tableSchema({
@@ -54,7 +57,10 @@ export default appSchema({
                 { name: "teeth_count", type: "number", isIndexed: true },
                 { name: "helix_angle", type: "number", isIndexed: true },
                 { name: "module_or_dp", type: "number" },
-                { name: "gear_abcd_json", type: "string" }, // Saved working gear-train combination
+                { name: "gear_a", type: "number" },
+                { name: "gear_b", type: "number" },
+                { name: "gear_c", type: "number" },
+                { name: "gear_d", type: "number" },
                 { name: "calculation_precision", type: "number" },
                 { name: "last_used_at", type: "number" },
             ],
@@ -91,6 +97,9 @@ export default appSchema({
                 { name: "helix_angle", type: "number" },
                 { name: "pitch", type: "number", isOptional: true },
                 { name: "calculated_od", type: "number" },
+                { name: "face_width", type: "number", isOptional: true },
+                { name: "pressure_angle", type: "number", isOptional: true },
+                { name: "hand", type: "string", isOptional: true },
             ],
         }),
         tableSchema({
@@ -99,7 +108,13 @@ export default appSchema({
                 { name: "machine_id", type: "string", isIndexed: true },
                 { name: "spec_id", type: "string", isIndexed: true },
                 { name: "cutter_id", type: "string", isIndexed: true },
-                { name: "gear_settings_abcd", type: "string" }, // Realized gear train matching schema
+                { name: "gear_a", type: "number" },
+                { name: "gear_b", type: "number" },
+                { name: "gear_c", type: "number" },
+                { name: "gear_d", type: "number" },
+                { name: "status", type: "string" }, // queued, in_setup, running, completed
+                { name: "sequence_order", type: "number" },
+                { name: "quantity", type: "number", isOptional: true },
                 { name: "operator_notes", type: "string", isOptional: true },
                 { name: "created_at", type: "number" },
             ],
