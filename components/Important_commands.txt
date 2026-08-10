@@ -1,0 +1,4 @@
+bash command for watermelon DB inspection : 
+adb shell "run-as com.anonymous.gearworkshelper cat gearworks_db.db" > my_local_copy.db
+adb shell "run-as com.anonymous.gearworkshelper cat gearworks_db.db-wal" > my_local_copy.db-wal
+adb shell "run-as com.anonymous.gearworkshelper cat gearworks_db.db-shm" > my_local_copy.db-shm

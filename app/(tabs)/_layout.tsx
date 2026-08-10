@@ -1,9 +1,9 @@
 import { HapticTab } from "@/components/Buttons/HapticTab";
 import { COLORS } from "@/constants/theme";
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router";
-import React from "react";
 
 export default function TabLayout() {
     return (
@@ -35,11 +35,28 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="Orders"
+                options={{
+                    title: "Orders",
+                    tabBarIcon: ({ color, focused }) => (
+                        <FontAwesome6
+                            name={focused ? "clipboard-list" : "clipboard"}
+                            size={24}
+                            color={focused ? color : COLORS.neutral}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="Calculator"
                 options={{
                     title: "Calculator",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "calculator" : "calculator-outline"} size={24} color={focused ? color : COLORS.neutral} />
+                        <Ionicons
+                            name={focused ? "calculator" : "calculator-outline"}
+                            size={24}
+                            color={focused ? color : COLORS.neutral}
+                        />
                     ),
                 }}
             />
@@ -51,18 +68,20 @@ export default function TabLayout() {
                         <MaterialCommunityIcons name="truck-cargo-container" size={24} color={focused ? color : COLORS.neutral} />
                     ),
                 }}
-            />  
+            />
             <Tabs.Screen
                 name="Settings"
                 options={{
                     title: "Settings",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "settings" : "settings-outline"} size={24} color={focused ? color : COLORS.neutral} />
+                        <Ionicons
+                            name={focused ? "settings" : "settings-outline"}
+                            size={24}
+                            color={focused ? color : COLORS.neutral}
+                        />
                     ),
                 }}
             />
         </Tabs>
-
     );
 }
-
