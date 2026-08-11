@@ -224,10 +224,10 @@ export default function AddMachineScreen() {
                                         {item.quantity}
                                     </Text>
                                     <TouchableOpacity
-                                        style={[styles.tableCell, { width: 60, alignItems: "center" }]}
+                                        style={styles.tableActionCell}
                                         onPress={() => handleRemoveGear(index)}
                                     >
-                                        <Ionicons name="trash-outline" size={18} color={COLORS.error || "#E53935"} />
+                                        <Ionicons name="trash-outline" size={18} color={COLORS.error} />
                                     </TouchableOpacity>
                                 </View>
                             ))}
@@ -356,6 +356,11 @@ const styles = StyleSheet.create({
     tableCell: {
         fontSize: 14,
         color: COLORS.black,
+    },
+    tableActionCell: {
+        width: 60,
+        alignItems: "center",
+        justifyContent: "center",
     },
     saveBtn: {
         backgroundColor: COLORS.primary,

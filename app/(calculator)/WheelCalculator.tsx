@@ -1,25 +1,51 @@
 import CalculatorHeader from "@/components/Headers/CalculatorHeader";
+import SegmentedControl, { SegmentedOption } from "@/components/Helper/SegmentedControl";
 import TextField from "@/components/Helper/TextField";
 import FormBlock from "@/components/Wrappers/FormBlock";
 import { COLORS } from "@/constants/theme";
 import useWheelCalculator from "@/hooks/useWheelCalculator";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Button, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WheelCalculator() {
     const {
-        pitch,
-        setPitch,
+        cutterType,
+        setCutterType,
+        cutterValue,
+        setCutterValue,
         wormDia,
         setWormDia,
+        starts,
+        setStarts,
         teeth,
         setTeeth,
         outDia,
         setOutDia,
+        throatDia,
+        setThroatDia,
         wheelAngle,
         setWheelAngle,
         calculate,
     } = useWheelCalculator();
+
+    const cutterTypeOptions: SegmentedOption[] = [
+        {
+            label: "Pitch",
+            value: "pitch",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />,
+        },
+        {
+            label: "Module",
+            value: "module",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />,
+        },
+        {
+            label: "DP",
+            value: "dp",
+            icon: (color) => <MaterialCommunityIcons name="cog-outline" size={20} color={color} />,
+        },
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -29,9 +55,13 @@ export default function WheelCalculator() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <CalculatorHeader
-                        name="Wheel Calculator"
-                        subtitle="Compute critical dimensions for worm wheels."
+                    <CalculatorHeader name="Wheel Calculator" subtitle="Compute critical dimensions for worm wheels." />
+
+                    <SegmentedControl
+                        label="Cutter Type"
+                        options={cutterTypeOptions}
+                        selectedValue={cutterType}
+                        onChange={setCutterType}
                     />
 
                     <FormBlock>
@@ -43,12 +73,26 @@ export default function WheelCalculator() {
                             rightElement={<Text style={styles.unitText}>mm</Text>}
                         />
                         <TextField
-                            label="Pitch (in inch)"
+                            label="Throat Diameter (TD)"
                             placeholder="--"
-                            value={pitch}
-                            onChangeText={setPitch}
-                            rightElement={<Text style={styles.unitText}>in</Text>}
+                            value={throatDia}
+                            onChangeText={setThroatDia}
+                            rightElement={<Text style={styles.unitText}>mm</Text>}
                         />
+                        <TextField
+                            label={cutterType === "pitch" ? "Pitch (in inch)" : cutterType === "module" ? "Module (m)" : "DP"}
+                            placeholder="--"
+                            value={cutterValue}
+                            onChangeText={setCutterValue}
+                            rightElement={
+                                cutterType === "pitch" ? (
+                                    <Text style={styles.unitText}>in</Text>
+                                ) : cutterType === "module" ? (
+                                    <Text style={styles.unitText}>mm</Text>
+                                ) : undefined
+                            }
+                        />
+                        <TextField label="Starts of cutter" placeholder="--" value={starts} onChangeText={setStarts} />
                         <TextField
                             label="Worm Dia"
                             placeholder="--"
@@ -56,18 +100,8 @@ export default function WheelCalculator() {
                             onChangeText={setWormDia}
                             rightElement={<Text style={styles.unitText}>mm</Text>}
                         />
-                        <TextField
-                            label="Number of teeth (Z)"
-                            placeholder="--"
-                            value={teeth}
-                            onChangeText={setTeeth}
-                        />
-                        <TextField
-                            label="Wheel Angle"
-                            placeholder="--"
-                            value={wheelAngle}
-                            onChangeText={setWheelAngle}
-                        />
+                        <TextField label="Number of teeth (Z)" placeholder="--" value={teeth} onChangeText={setTeeth} />
+                        <TextField label="Wheel Angle" placeholder="--" value={wheelAngle} onChangeText={setWheelAngle} />
                     </FormBlock>
 
                     <View style={styles.buttonContainer}>

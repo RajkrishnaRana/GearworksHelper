@@ -7,6 +7,7 @@ export const COLORS = {
     neutralDark: "#45464F",
     neutralLight: "#AAAAB4",
     neutralBackground: "#E1E2EC",
+    error: "#E53935",
     
     white: "#FFFFFF",
     black: "#000000",
