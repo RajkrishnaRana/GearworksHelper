@@ -4,7 +4,7 @@ import CalculatorHeader from "@/components/Headers/CalculatorHeader";
 import SegmentedControl, { SegmentedOption } from "@/components/Helper/SegmentedControl";
 import { COLORS } from "@/constants/theme";
 import { database } from "@/db";
-import { Cutter, Machine } from "@/db/models";
+import { Cutter, Machine, Product } from "@/db/models";
 import { useInventory } from "@/hooks/useInventory";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 
 const filterOptions: SegmentedOption[] = [
-    { label: "All", value: "all" },
+    { label: "Products", value: "product" },
     { label: "Machines", value: "machine" },
     { label: "Cutters", value: "cutter" },
 ];
@@ -24,13 +24,15 @@ const filterOptions: SegmentedOption[] = [
 interface InventoryListProps {
     cutters: Cutter[];
     machines: Machine[];
+    products: Product[];
     searchQuery?: string;
 }
 
-const InventoryList = ({ cutters, machines }: InventoryListProps) => {
-    const { filter, setFilter, isAddSheetOpen, setIsAddSheetOpen, deleteCutter, deleteMachine } = useInventory();
+const InventoryList = ({ cutters, machines, products }: InventoryListProps) => {
+    const { filter, setFilter, isAddSheetOpen, setIsAddSheetOpen, deleteCutter, deleteMachine, deleteProduct } = useInventory();
 
     const allItems = [
+        ...products.map((p) => ({ model: p, itemType: "product" as const, uniqueId: `product-${p.id}` })),
         ...machines.map((m) => ({ model: m, itemType: "machine" as const, uniqueId: `machine-${m.id}` })),
         ...cutters.map((c) => ({ model: c, itemType: "cutter" as const, uniqueId: `cutter-${c.id}` })),
     ];
@@ -42,6 +44,7 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
 
     const renderItem = ({ item }: { item: any }) => {
         const isMachine = item.itemType === "machine";
+        const isProduct = item.itemType === "product";
         const model = item.model;
 
         return (
@@ -51,25 +54,38 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
                 onPress={() => {
                     if (isMachine) {
                         router.push(`/add-machine?id=${model.id}`);
+                    } else if (isProduct) {
+                        router.push(`/add-product?id=${model.id}`);
                     } else {
                         router.push(`/add-cutter?id=${model.id}`);
                     }
                 }}
             >
-                <View style={[styles.iconBox, isMachine ? styles.machineIconBg : styles.cutterIconBg]}>
+                <View style={[styles.iconBox, isMachine ? styles.machineIconBg : isProduct ? styles.productIconBg : styles.cutterIconBg]}>
                     <MaterialCommunityIcons
-                        name={isMachine ? "cog" : "content-cut"}
+                        name={isMachine ? "cog" : isProduct ? "archive" : "content-cut"}
                         size={24}
-                        color={isMachine ? COLORS.primary : COLORS.secondary}
+                        color={isMachine ? COLORS.primary : isProduct ? COLORS.success : COLORS.secondary}
                     />
                 </View>
 
                 <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>{isMachine ? (model as Machine).name : (model as Cutter).cutterName}</Text>
+                    <Text style={styles.cardTitle}>{isMachine ? (model as Machine).name : isProduct ? (model as Product).productName : (model as Cutter).cutterName}</Text>
                     {isMachine ? (
-                        <Text style={styles.cardSubtitle}>
-                            {`Ratio: ${(model as Machine).indexingRatio} • Status: ${(model as Machine).status || "active"}`}
-                        </Text>
+                        <View style={styles.statsGrid}>
+                            <Text style={styles.statItem}>Ratio: {(model as Machine).indexingRatio}</Text>
+                            {(model as Machine).differentialConstant ? (
+                                <Text style={styles.statItem}>Diff: {(model as Machine).differentialConstant}</Text>
+                            ) : null}
+                            <Text style={styles.statItem}>Status: {(model as Machine).status || "active"}</Text>
+                        </View>
+                    ) : isProduct ? (
+                        <View style={styles.statsGrid}>
+                            <Text style={styles.statItem}>Customer: {(model as Product).customerName}</Text>
+                            <Text style={styles.statItem}>Total: {(model as Product).totalQuantity}</Text>
+                            <Text style={styles.statItem}>Taken: {(model as Product).dispatchedQuantity}</Text>
+                            <Text style={styles.statItem}>Left: {(model as Product).totalQuantity - (model as Product).dispatchedQuantity}</Text>
+                        </View>
                     ) : (
                         <View style={styles.statsGrid}>
                             <Text style={styles.statItem}>Angle: {(model as Cutter).angle}</Text>
@@ -81,14 +97,14 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
                     )}
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>
-                            {isMachine ? "MACHINE" : ((model as Cutter).cutterType || "CUTTER").toUpperCase()}
+                            {isMachine ? "MACHINE" : isProduct ? "PRODUCT" : ((model as Cutter).cutterType || "CUTTER").toUpperCase()}
                         </Text>
                     </View>
                 </View>
 
                 <TouchableOpacity
                     style={styles.deleteBtn}
-                    onPress={() => (isMachine ? deleteMachine(model) : deleteCutter(model))}
+                    onPress={() => (isMachine ? deleteMachine(model) : isProduct ? deleteProduct(model) : deleteCutter(model))}
                 >
                     <Ionicons name="trash-outline" size={20} color={COLORS.neutralDark} />
                 </TouchableOpacity>
@@ -129,6 +145,7 @@ const InventoryList = ({ cutters, machines }: InventoryListProps) => {
 const EnhancedInventoryList = withObservables(['searchQuery'], ({ searchQuery }: { searchQuery: string }) => {
     let cutterQuery = database.get<Cutter>("cutters").query();
     let machineQuery = database.get<Machine>("machines").query();
+    let productQuery = database.get<Product>("products").query();
 
     if (searchQuery && searchQuery.trim() !== "") {
         const query = searchQuery.trim();
@@ -143,11 +160,19 @@ const EnhancedInventoryList = withObservables(['searchQuery'], ({ searchQuery }:
         machineQuery = database.get<Machine>("machines").query(
             Q.where('name', Q.like(`%${query}%`))
         );
+
+        productQuery = database.get<Product>("products").query(
+            Q.or(
+                Q.where('product_name', Q.like(`%${query}%`)),
+                Q.where('customer_name', Q.like(`%${query}%`))
+            )
+        );
     }
 
     return {
         cutters: cutterQuery.observe(),
         machines: machineQuery.observe(),
+        products: productQuery.observe(),
     };
 })(InventoryList);
 
@@ -220,6 +245,7 @@ const styles = StyleSheet.create({
     },
     machineIconBg: { backgroundColor: "#E6F4FE" },
     cutterIconBg: { backgroundColor: "#FFF8E1" },
+    productIconBg: { backgroundColor: "#E8F5E9" },
     cardContent: { flex: 1 },
     cardTitle: { fontSize: 16, fontWeight: "bold", color: COLORS.black },
     cardSubtitle: { fontSize: 13, color: COLORS.neutralDark, marginTop: 2 },

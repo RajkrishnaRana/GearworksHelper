@@ -1,9 +1,9 @@
 import { Text, View } from "react-native";
 
-export default function Settings() {
+export default function Records() {
     return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>Settings Tab</Text>
+            <Text>Records Tab</Text>
         </View>
     );
 }

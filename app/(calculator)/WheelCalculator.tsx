@@ -84,13 +84,7 @@ export default function WheelCalculator() {
                             placeholder="--"
                             value={cutterValue}
                             onChangeText={setCutterValue}
-                            rightElement={
-                                cutterType === "pitch" ? (
-                                    <Text style={styles.unitText}>in</Text>
-                                ) : cutterType === "module" ? (
-                                    <Text style={styles.unitText}>mm</Text>
-                                ) : undefined
-                            }
+                            rightElement={cutterType === "pitch" && <Text style={styles.unitText}>in</Text>}
                         />
                         <TextField label="Starts of cutter" placeholder="--" value={starts} onChangeText={setStarts} />
                         <TextField

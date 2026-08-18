@@ -26,6 +26,7 @@ export default function AddMachineScreen() {
     // Machine form state
     const [machineName, setMachineName] = useState("");
     const [indexingRatio, setIndexingRatio] = useState("");
+    const [differentialConstant, setDifferentialConstant] = useState("");
     const [status, setStatus] = useState("active");
 
     // Change gears state
@@ -40,6 +41,7 @@ export default function AddMachineScreen() {
                     const machine = await database.get<Machine>("machines").find(id);
                     setMachineName(machine.name);
                     setIndexingRatio(machine.indexingRatio.toString());
+                    setDifferentialConstant(machine.differentialConstant.toString() || "");
                     setStatus(machine.status || "active");
 
                     const fetchedGears = await database
@@ -52,7 +54,7 @@ export default function AddMachineScreen() {
                             id: g.id,
                             teethCount: g.teethCount,
                             quantity: g.quantity,
-                        }))
+                        })),
                     );
                 } catch (e) {
                     console.error("Failed to load machine details:", e);
@@ -108,14 +110,21 @@ export default function AddMachineScreen() {
                 return;
             }
 
+            let parsedDifferentialConstant = parseFloat(differentialConstant);
+            if (isNaN(parsedDifferentialConstant)) {
+                Alert.alert("Invalid Input", "Differential constant must be a valid number.");
+                return;
+            }
+
             await saveMachineWithGears(
                 id,
                 {
                     name: machineName.trim(),
                     indexingRatio: parsedRatio,
+                    differentialConstant: parsedDifferentialConstant,
                     status,
                 },
-                gears
+                gears,
             );
 
             router.back();
@@ -135,7 +144,11 @@ export default function AddMachineScreen() {
                 <View style={styles.headerRight} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+            >
                 {/* Machine Details Form */}
                 <Text style={styles.sectionTitle}>Machine Information</Text>
                 <FormBlock>
@@ -153,6 +166,14 @@ export default function AddMachineScreen() {
                         keyboardType="numeric"
                         value={indexingRatio}
                         onChangeText={setIndexingRatio}
+                        required
+                    />
+                    <TextField
+                        label="Differential Constant"
+                        placeholder="e.g. 9"
+                        keyboardType="numeric"
+                        value={differentialConstant}
+                        onChangeText={setDifferentialConstant}
                         required
                     />
                     <SegmentedControl
@@ -217,16 +238,9 @@ export default function AddMachineScreen() {
                                         index === gears.length - 1 ? { borderBottomWidth: 0 } : null,
                                     ]}
                                 >
-                                    <Text style={[styles.tableCell, { flex: 2, fontWeight: "600" }]}>
-                                        {item.teethCount} T
-                                    </Text>
-                                    <Text style={[styles.tableCell, { flex: 2, textAlign: "center" }]}>
-                                        {item.quantity}
-                                    </Text>
-                                    <TouchableOpacity
-                                        style={styles.tableActionCell}
-                                        onPress={() => handleRemoveGear(index)}
-                                    >
+                                    <Text style={[styles.tableCell, { flex: 2, fontWeight: "600" }]}>{item.teethCount} T</Text>
+                                    <Text style={[styles.tableCell, { flex: 2, textAlign: "center" }]}>{item.quantity}</Text>
+                                    <TouchableOpacity style={styles.tableActionCell} onPress={() => handleRemoveGear(index)}>
                                         <Ionicons name="trash-outline" size={18} color={COLORS.error} />
                                     </TouchableOpacity>
                                 </View>

@@ -8,6 +8,7 @@ export default appSchema({
             columns: [
                 { name: "name", type: "string" },
                 { name: "indexing_ratio", type: "number" },
+                { name: "differential_constant", type: "number" },
                 { name: "status", type: "string" },
                 { name: "is_active", type: "boolean" },
                 { name: "created_at", type: "number" },
@@ -116,6 +117,16 @@ export default appSchema({
                 { name: "sequence_order", type: "number" },
                 { name: "quantity", type: "number", isOptional: true },
                 { name: "operator_notes", type: "string", isOptional: true },
+                { name: "created_at", type: "number" },
+            ],
+        }),
+        tableSchema({
+            name: "products",
+            columns: [
+                { name: "customer_name", type: "string" },
+                { name: "product_name", type: "string" },
+                { name: "total_quantity", type: "number" },
+                { name: "dispatched_quantity", type: "number" },
                 { name: "created_at", type: "number" },
             ],
         }),

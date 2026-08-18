@@ -7,6 +7,7 @@ import MachineChangeGear from './MachineChangeGear';
 import Order from './Order';
 import ProductionSetup from './ProductionSetup';
 import RatioLookupCache from './RatioLookupCache';
+import Product from './Product';
 
 export {
   Cutter,
@@ -18,6 +19,7 @@ export {
   Order,
   ProductionSetup,
   RatioLookupCache,
+  Product,
 };
 
 export const modelClasses = [
@@ -30,4 +32,5 @@ export const modelClasses = [
   Order,
   GearSpecification,
   ProductionSetup,
+  Product,
 ];

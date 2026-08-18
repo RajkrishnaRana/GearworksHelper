@@ -70,12 +70,12 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="Settings"
+                name="Records"
                 options={{
-                    title: "Settings",
+                    title: "Records",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons
-                            name={focused ? "settings" : "settings-outline"}
+                        <MaterialCommunityIcons
+                            name={focused ? "file-document-edit" : "file-document-edit-outline"}
                             size={24}
                             color={focused ? color : COLORS.neutral}
                         />

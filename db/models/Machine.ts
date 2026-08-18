@@ -13,6 +13,7 @@ export default class Machine extends Model {
 
     @text("name") name: string;
     @field("indexing_ratio") indexingRatio: number;
+    @field("differential_constant") differentialConstant: number;
     @text("status") status: string;
     @field("is_active") isActive: boolean;
     @readonly @date("created_at") createdAt: Date;

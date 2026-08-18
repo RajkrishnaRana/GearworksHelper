@@ -26,7 +26,7 @@ export default function useWheelCalculator() {
         const hasStarts = starts.trim() !== "" && !isNaN(s);
 
         const getP_eff = () => {
-            if (cutterType === "pitch") return val / Math.PI;
+            if (cutterType === "pitch") return (val * 25.4) / Math.PI;
             if (cutterType === "module") return val;
             if (cutterType === "dp") return val !== 0 ? 25.4 / val : 0;
             return 0;
@@ -34,16 +34,9 @@ export default function useWheelCalculator() {
 
         const convertP_effToCutter = (pEff: number) => {
             if (pEff === 0) return 0;
-            if (cutterType === "pitch") return pEff * Math.PI;
+            if (cutterType === "pitch") return (pEff * Math.PI) / 25.4;
             if (cutterType === "module") return pEff;
             if (cutterType === "dp") return 25.4 / pEff;
-            return 0;
-        };
-
-        const getPitchInches = () => {
-            if (cutterType === "pitch") return val;
-            if (cutterType === "module") return val * (Math.PI / 25.4);
-            if (cutterType === "dp") return val !== 0 ? Math.PI / val : 0;
             return 0;
         };
 

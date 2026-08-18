@@ -1,10 +1,10 @@
 import { COLORS } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { router } from "expo-router";
 import { useEffect, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
-import { router } from "expo-router";
 
 interface AddInventoryActionSheetProps {
     visible: boolean;
@@ -31,10 +31,12 @@ export default function AddInventoryActionSheet({ visible, onClose }: AddInvento
         }
     }, [visible]);
 
-    const handleSelectOption = (type: "machine" | "cutter") => {
+    const handleSelectOption = (type: "machine" | "cutter" | "product") => {
         actionSheetRef.current?.hide();
         if (type === "machine") {
             router.push("/add-machine");
+        } else if (type === "product") {
+            router.push("/add-product");
         } else {
             router.push("/add-cutter");
         }
@@ -53,11 +55,7 @@ export default function AddInventoryActionSheet({ visible, onClose }: AddInvento
                     <Text style={styles.sheetTitle}>Add to Inventory</Text>
                     <Text style={styles.sheetSubtitle}>Choose what you would like to add:</Text>
 
-                    <TouchableOpacity
-                        style={styles.optionCard}
-                        onPress={() => handleSelectOption("machine")}
-                        activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.optionCard} onPress={() => handleSelectOption("machine")} activeOpacity={0.7}>
                         <View style={[styles.iconContainer, styles.machineIconBg]}>
                             <MaterialCommunityIcons name="cog" size={26} color={COLORS.primary} />
                         </View>
@@ -68,11 +66,18 @@ export default function AddInventoryActionSheet({ visible, onClose }: AddInvento
                         <Ionicons name="chevron-forward" size={20} color={COLORS.neutralDark} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.optionCard}
-                        onPress={() => handleSelectOption("cutter")}
-                        activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.optionCard} onPress={() => handleSelectOption("product")} activeOpacity={0.7}>
+                        <View style={[styles.iconContainer, styles.productIconBg]}>
+                            <MaterialCommunityIcons name="archive" size={26} color={COLORS.primary} />
+                        </View>
+                        <View style={styles.optionTextContainer}>
+                            <Text style={styles.optionTitle}>Add Product Lot</Text>
+                            <Text style={styles.optionDesc}>Track customer gear lots and dispatches</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={COLORS.neutralDark} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.optionCard} onPress={() => handleSelectOption("cutter")} activeOpacity={0.7}>
                         <View style={[styles.iconContainer, styles.cutterIconBg]}>
                             <MaterialCommunityIcons name="content-cut" size={26} color={COLORS.secondary} />
                         </View>
@@ -142,6 +147,9 @@ const styles = StyleSheet.create({
     },
     cutterIconBg: {
         backgroundColor: "#FFF8E1",
+    },
+    productIconBg: {
+        backgroundColor: "#E8F5E9",
     },
     optionTextContainer: {
         flex: 1,
