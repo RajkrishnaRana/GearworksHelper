@@ -1,9 +1,9 @@
-import { Model, Query, Relation } from "@nozbe/watermelondb";
-import { children, field, relation, text } from "@nozbe/watermelondb/decorators";
+import { Model, Relation } from "@nozbe/watermelondb";
+import { field, relation, text } from "@nozbe/watermelondb/decorators";
 import type Order from "./Order";
 
-export default class GearSpecification extends Model {
-    static table = "gear_specifications";
+export default class WormWheelSpecification extends Model {
+    static table = "worm_wheel_specifications";
 
     static associations = {
         orders: { type: "belongs_to" as const, key: "order_id" },
@@ -12,16 +12,15 @@ export default class GearSpecification extends Model {
     @text("order_id") orderId: string;
     @field("version_number") versionNumber: number;
     @field("is_current_version") isCurrentVersion: boolean;
-    @text("gear_type") gearType: string;
+    @field("out_dia") outDia: number;
+    @field("throat_dia") throatDia: number;
+    @field("pitch") pitch?: number;
     @text("module_or_dp") moduleOrDp: string;
     @field("cutter_number") cutterNumber: number;
+    @field("starts") starts: number;
+    @field("worm_dia") wormDia: number;
     @field("teeth_count") teethCount: number;
-    @text("helix_angle") helixAngle: string;
-    @field("pitch") pitch?: number;
-    @field("calculated_od") calculatedOd: number;
-    @field("out_dia") outDia?: number;
-    @field("face_width") faceWidth?: number;
-    @field("pressure_angle") pressureAngle?: number;
+    @text("wheel_angle") wheelAngle: string;
     @text("hand") hand?: string;
     @text("notes") notes?: string;
 

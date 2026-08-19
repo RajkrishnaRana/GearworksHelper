@@ -1,7 +1,7 @@
 import { Model, Relation } from '@nozbe/watermelondb';
 import { date, field, readonly, relation, text } from '@nozbe/watermelondb/decorators';
 import type Cutter from './Cutter';
-import type GearSpecification from './GearSpecification';
+import type Order from './Order';
 import type Machine from './Machine';
 
 export default class ProductionSetup extends Model {
@@ -9,12 +9,12 @@ export default class ProductionSetup extends Model {
 
   static associations = {
     machines: { type: 'belongs_to' as const, key: 'machine_id' },
-    gear_specifications: { type: 'belongs_to' as const, key: 'spec_id' },
+    orders: { type: 'belongs_to' as const, key: 'order_id' },
     cutters: { type: 'belongs_to' as const, key: 'cutter_id' },
   };
 
   @text('machine_id') machineId: string;
-  @text('spec_id') specId: string;
+  @text('order_id') orderId: string;
   @text('cutter_id') cutterId: string;
   @field('gear_a') gearA: number;
   @field('gear_b') gearB: number;
@@ -27,6 +27,6 @@ export default class ProductionSetup extends Model {
   @readonly @date('created_at') createdAt: Date;
 
   @relation('machines', 'machine_id') machine: Relation<Machine>;
-  @relation('gear_specifications', 'spec_id') gearSpecification: Relation<GearSpecification>;
+  @relation('orders', 'order_id') order: Relation<Order>;
   @relation('cutters', 'cutter_id') cutter: Relation<Cutter>;
 }

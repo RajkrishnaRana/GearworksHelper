@@ -3,6 +3,7 @@ import SegmentedControl, { SegmentedOption } from "@/components/Helper/Segmented
 import { COLORS } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     FlatList,
@@ -12,97 +13,127 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { database } from "@/db";
+import { Order, Customer } from "@/db/models";
+import { withObservables } from "@nozbe/watermelondb/react";
+import { Q } from "@nozbe/watermelondb";
 
-export interface ClientOrder {
-    id: string;
-    orderNumber: string;
-    clientName: string;
-    details: string;
-    dueDate: string;
-    status: "Pending" | "In Progress" | "Completed";
-}
+const filterOptions: SegmentedOption[] = [
+    { label: "All", value: "all" },
+    { label: "Pending", value: "pending" },
+    { label: "Completed", value: "completed" },
+];
 
-export default function Orders() {
-    const [orders, setOrders] = useState<ClientOrder[]>([
-        {
-            id: "1",
-            orderNumber: "#ORD-2041",
-            clientName: "Apex Motion Tech",
-            details: "15x Helical Gears (Module 3.0)",
-            dueDate: "Aug 15, 2026",
-            status: "In Progress",
-        },
-        {
-            id: "2",
-            orderNumber: "#ORD-2040",
-            clientName: "Precision Drive Corp",
-            details: "8x Worm Wheel & Shaft Sets",
-            dueDate: "Aug 20, 2026",
-            status: "Pending",
-        },
-        {
-            id: "3",
-            orderNumber: "#ORD-2038",
-            clientName: "Industrial Gear Works",
-            details: "50x Standard Spur Gears",
-            dueDate: "Aug 02, 2026",
-            status: "Completed",
-        },
-    ]);
+const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+        case "completed":
+        case "delivered":
+            return { bg: "#E8F5E9", text: "#2E7D32" };
+        case "in_production":
+        case "in progress":
+            return { bg: "#E3F2FD", text: "#1565C0" };
+        case "quoted":
+        case "confirmed":
+        case "pending":
+        default:
+            return { bg: "#FFF3E0", text: "#E65100" };
+    }
+};
 
-    const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+const OrderItem = ({ order, customer }: { order: Order; customer: Customer | null }) => {
+    const statusStyle = getStatusStyle(order.orderStatus || "quoted");
+    
+    // Format a pseudo order number from ID
+    const orderNumber = `#ORD-${order.id.slice(0, 4).toUpperCase()}`;
 
-    const filterOptions: SegmentedOption[] = [
-        { label: "All", value: "all" },
-        { label: "Pending", value: "pending" },
-        { label: "Completed", value: "completed" },
-    ];
+    // Format date properly
+    const dueDate = order.deliveryDeadline 
+        ? new Date(order.deliveryDeadline).toLocaleDateString()
+        : "Not Set";
+
+    return (
+        <View style={styles.card}>
+            <View style={styles.cardHeader}>
+                <View style={styles.clientInfo}>
+                    <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={COLORS.primary} />
+                    <Text style={styles.orderNumber}>{orderNumber}</Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+                    <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                        {order.orderStatus.toUpperCase()}
+                    </Text>
+                </View>
+            </View>
+
+            <Text style={styles.clientName}>{customer ? customer.name : "Unknown Customer"}</Text>
+            <Text style={styles.orderDetails}>Total Amount: ₹{order.totalAgreedAmount || 0}</Text>
+
+            <View style={styles.cardFooter}>
+                <View style={styles.dateRow}>
+                    <Ionicons name="calendar-outline" size={14} color={COLORS.neutralDark} />
+                    <Text style={styles.dateText}>Due: {dueDate}</Text>
+                </View>
+            </View>
+        </View>
+    );
+};
+
+const EnhancedOrderItem = withObservables(['order'], ({ order }: { order: Order }) => ({
+    order: order.observe(),
+    customer: order.customer.observe(),
+}))(OrderItem);
+
+const OrderList = ({ orders, filter }: { orders: Order[], filter: string }) => {
+    const router = useRouter();
 
     const filteredOrders = orders.filter((order) => {
+        const status = order.orderStatus?.toLowerCase() || "";
         if (filter === "all") return true;
-        if (filter === "pending") return order.status === "Pending" || order.status === "In Progress";
-        if (filter === "completed") return order.status === "Completed";
+        if (filter === "pending") return ["quoted", "confirmed", "in_production", "pending", "in progress"].includes(status);
+        if (filter === "completed") return ["completed", "delivered"].includes(status);
         return true;
     });
 
-    const getStatusStyle = (status: ClientOrder["status"]) => {
-        switch (status) {
-            case "Completed":
-                return { bg: "#E8F5E9", text: "#2E7D32" };
-            case "In Progress":
-                return { bg: "#E3F2FD", text: "#1565C0" };
-            case "Pending":
-            default:
-                return { bg: "#FFF3E0", text: "#E65100" };
-        }
-    };
-
-    const renderOrderItem = ({ item }: { item: ClientOrder }) => {
-        const statusStyle = getStatusStyle(item.status);
-        return (
-            <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <View style={styles.clientInfo}>
-                        <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={COLORS.primary} />
-                        <Text style={styles.orderNumber}>{item.orderNumber}</Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                        <Text style={[styles.statusText, { color: statusStyle.text }]}>{item.status}</Text>
-                    </View>
+    return (
+        <>
+            {filteredOrders.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <MaterialCommunityIcons name="clipboard-text-off-outline" size={60} color={COLORS.neutralLight} />
+                    <Text style={styles.emptyTitle}>No Orders Found</Text>
+                    <Text style={styles.emptySubtitle}>
+                        There are no client orders under this filter category.
+                    </Text>
                 </View>
+            ) : (
+                <FlatList
+                    data={filteredOrders}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => <EnhancedOrderItem order={item} />}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                />
+            )}
+            
+            <TouchableOpacity 
+                style={styles.fab}
+                onPress={() => router.push('/add-order')}
+            >
+                <Ionicons name="add" size={32} color={COLORS.white} />
+            </TouchableOpacity>
+        </>
+    );
+};
 
-                <Text style={styles.clientName}>{item.clientName}</Text>
-                <Text style={styles.orderDetails}>{item.details}</Text>
+const EnhancedOrderList = withObservables([], () => ({
+    orders: database.collections.get<Order>('orders').query(
+        Q.sortBy('created_at', Q.desc)
+    ).observe(),
+}))(OrderList);
 
-                <View style={styles.cardFooter}>
-                    <View style={styles.dateRow}>
-                        <Ionicons name="calendar-outline" size={14} color={COLORS.neutralDark} />
-                        <Text style={styles.dateText}>Due: {item.dueDate}</Text>
-                    </View>
-                </View>
-            </View>
-        );
-    };
+
+export default function Orders() {
+    const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
 
     return (
         <SafeAreaView style={styles.container}>
@@ -118,25 +149,7 @@ export default function Orders() {
                     onChange={(val) => setFilter(val as "all" | "pending" | "completed")}
                 />
             </View>
-
-            {filteredOrders.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <MaterialCommunityIcons name="clipboard-text-off-outline" size={60} color={COLORS.neutralLight} />
-                    <Text style={styles.emptyTitle}>No Orders Found</Text>
-                    <Text style={styles.emptySubtitle}>
-                        There are no client orders under this filter category.
-                    </Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={filteredOrders}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderOrderItem}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                />
-            )}
+            <EnhancedOrderList filter={filter} />
         </SafeAreaView>
     );
 }
@@ -151,7 +164,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 15,
-        paddingBottom: 30,
+        paddingBottom: 80, // Extra padding to not hide behind FAB
         paddingTop: 5,
     },
     card: {
@@ -237,5 +250,21 @@ const styles = StyleSheet.create({
         color: COLORS.neutral,
         textAlign: "center",
         marginTop: 6,
+    },
+    fab: {
+        position: "absolute",
+        bottom: 30,
+        right: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: COLORS.primary,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
     },
 });

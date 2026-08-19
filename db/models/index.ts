@@ -8,6 +8,8 @@ import Order from './Order';
 import ProductionSetup from './ProductionSetup';
 import RatioLookupCache from './RatioLookupCache';
 import Product from './Product';
+import Record from './Record';
+import WormWheelSpecification from './WormWheelSpecification';
 
 export {
   Cutter,
@@ -20,6 +22,8 @@ export {
   ProductionSetup,
   RatioLookupCache,
   Product,
+  Record,
+  WormWheelSpecification,
 };
 
 export const modelClasses = [
@@ -33,4 +37,6 @@ export const modelClasses = [
   GearSpecification,
   ProductionSetup,
   Product,
+  Record,
+  WormWheelSpecification,
 ];

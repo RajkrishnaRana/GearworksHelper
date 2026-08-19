@@ -1,3 +1,5 @@
+import Autocomplete from "@/components/Helper/Autocomplete";
+import SegmentedControl from "@/components/Helper/SegmentedControl";
 import TextField from "@/components/Helper/TextField";
 import FormBlock from "@/components/Wrappers/FormBlock";
 import { COLORS } from "@/constants/theme";
@@ -6,6 +8,7 @@ import { Product } from "@/db/models";
 import { useInventory } from "@/hooks/useInventory";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { Q } from "@nozbe/watermelondb";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -17,10 +20,24 @@ export default function AddProductScreen() {
 
     const [customerName, setCustomerName] = useState("");
     const [productName, setProductName] = useState("");
-    const [totalQuantity, setTotalQuantity] = useState("");
-    const [dispatchedQuantity, setDispatchedQuantity] = useState(0);
+    const [quantity, setQuantity] = useState("");
+    const [actionType, setActionType] = useState("in");
     const [createdAt, setCreatedAt] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    const [customerOptions, setCustomerOptions] = useState<string[]>([]);
+    const [productOptions, setProductOptions] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchOptions = async () => {
+            const products = await database.get<Product>("products").query().fetch();
+            const cNames = Array.from(new Set(products.map((p) => p.customerName)));
+            const pNames = Array.from(new Set(products.map((p) => p.productName)));
+            setCustomerOptions(cNames);
+            setProductOptions(pNames);
+        };
+        fetchOptions();
+    }, []);
 
     useEffect(() => {
         if (id) {
@@ -29,8 +46,9 @@ export default function AddProductScreen() {
                     const product = await database.get<Product>("products").find(id);
                     setCustomerName(product.customerName);
                     setProductName(product.productName);
-                    setTotalQuantity(product.totalQuantity.toString());
-                    setDispatchedQuantity(product.dispatchedQuantity);
+                    // When editing, we don't know the exact past transaction, so we leave quantity blank or use total
+                    // Since it's mostly a transactional form now, maybe we leave quantity empty
+                    setQuantity("");
                     if (product.createdAt) {
                         setCreatedAt(new Date(product.createdAt));
                     }
@@ -45,30 +63,65 @@ export default function AddProductScreen() {
 
     const handleSave = async () => {
         try {
-            if (!customerName.trim() || !productName.trim() || !totalQuantity.trim()) {
+            if (!customerName.trim() || !productName.trim() || !quantity.trim()) {
                 Alert.alert("Missing Fields", "Please fill in all fields.");
                 return;
             }
 
-            const parsedTotal = parseInt(totalQuantity, 10);
+            const parsedQty = parseInt(quantity, 10);
 
-            if (isNaN(parsedTotal) || parsedTotal <= 0) {
-                Alert.alert("Invalid Input", "Total quantity must be a valid positive number.");
+            if (isNaN(parsedQty) || parsedQty <= 0) {
+                Alert.alert("Invalid Input", "Quantity must be a valid positive number.");
                 return;
             }
 
-            const data = {
-                customerName: customerName.trim(),
-                productName: productName.trim(),
-                totalQuantity: parsedTotal,
-                dispatchedQuantity: dispatchedQuantity,
-                createdAt: createdAt.getTime(),
-            };
-
             if (id) {
-                await updateProduct(id, data);
+                // Edit existing product directly
+                const existingProduct = await database.get<Product>("products").find(id);
+                const newTotal = actionType === "in" ? existingProduct.totalQuantity + parsedQty : existingProduct.totalQuantity;
+                const newDispatched =
+                    actionType === "out" ? existingProduct.dispatchedQuantity + parsedQty : existingProduct.dispatchedQuantity;
+
+                await updateProduct(id, {
+                    customerName: customerName.trim(),
+                    productName: productName.trim(),
+                    totalQuantity: newTotal,
+                    dispatchedQuantity: newDispatched,
+                    createdAt: createdAt.getTime(),
+                });
             } else {
-                await addProduct(data);
+                // Find if this product lot already exists
+                const existingProducts = await database
+                    .get<Product>("products")
+                    .query(Q.where("customer_name", customerName.trim()), Q.where("product_name", productName.trim()))
+                    .fetch();
+
+                const existingProduct = existingProducts[0];
+
+                if (existingProduct) {
+                    const newTotal =
+                        actionType === "in" ? existingProduct.totalQuantity + parsedQty : existingProduct.totalQuantity;
+                    const newDispatched =
+                        actionType === "out"
+                            ? existingProduct.dispatchedQuantity + parsedQty
+                            : existingProduct.dispatchedQuantity;
+
+                    await updateProduct(existingProduct.id, {
+                        customerName: existingProduct.customerName,
+                        productName: existingProduct.productName,
+                        totalQuantity: newTotal,
+                        dispatchedQuantity: newDispatched,
+                        createdAt: createdAt.getTime(),
+                    });
+                } else {
+                    await addProduct({
+                        customerName: customerName.trim(),
+                        productName: productName.trim(),
+                        totalQuantity: actionType === "in" ? parsedQty : 0,
+                        dispatchedQuantity: actionType === "out" ? parsedQty : 0,
+                        createdAt: createdAt.getTime(),
+                    });
+                }
             }
 
             router.back();
@@ -93,30 +146,42 @@ export default function AddProductScreen() {
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
             >
+                <SegmentedControl
+                    label="Transaction Type"
+                    options={[
+                        { label: "IN (Receive)", value: "in" },
+                        { label: "OUT (Dispatch)", value: "out" },
+                    ]}
+                    selectedValue={actionType}
+                    onChange={setActionType}
+                />
+
                 <Text style={styles.sectionTitle}>Lot Details</Text>
                 <FormBlock>
-                    <TextField
+                    <Autocomplete
                         label="Customer Name"
                         placeholder="e.g. Acme Corp"
                         value={customerName}
                         onChangeText={setCustomerName}
+                        options={customerOptions}
                         required
-                        keyboardType="default"
+                        zIndex={2000}
                     />
-                    <TextField
+                    <Autocomplete
                         label="Product / Gear Name"
                         placeholder="e.g. Spur Gear 20T"
                         value={productName}
                         onChangeText={setProductName}
+                        options={productOptions}
                         required
-                        keyboardType="default"
+                        zIndex={1000}
                     />
                     <TextField
-                        label="Total Quantity"
-                        placeholder="e.g. 500"
+                        label={actionType === "in" ? "Quantity Received (IN)" : "Quantity Dispatched (OUT)"}
+                        placeholder="e.g. 50"
                         keyboardType="numeric"
-                        value={totalQuantity}
-                        onChangeText={setTotalQuantity}
+                        value={quantity}
+                        onChangeText={setQuantity}
                         required
                     />
                     <View style={styles.dateContainer}>

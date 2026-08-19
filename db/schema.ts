@@ -78,12 +78,14 @@ export default appSchema({
             name: "orders",
             columns: [
                 { name: "customer_id", type: "string", isIndexed: true },
+                { name: "product_id", type: "string", isIndexed: true, isOptional: true },
                 { name: "order_status", type: "string" }, // quoted, confirmed, in_production, completed, delivered
                 { name: "quoted_rate_per_pc", type: "number" },
                 { name: "final_rate_per_pc", type: "number" },
                 { name: "bargain_note", type: "string", isOptional: true },
                 { name: "total_agreed_amount", type: "number" },
-                { name: "delivery_deadline", type: "number" },
+                { name: "delivery_deadline", type: "number", isOptional: true },
+                { name: "created_at", type: "number", isIndexed: true },
             ],
         }),
         tableSchema({
@@ -92,22 +94,42 @@ export default appSchema({
                 { name: "order_id", type: "string", isIndexed: true },
                 { name: "version_number", type: "number" },
                 { name: "is_current_version", type: "boolean" },
-                { name: "gear_type", type: "string" }, // straight, helix, pinion, wheel
-                { name: "module_or_dp", type: "number" },
+                { name: "gear_type", type: "string" }, // straight, helix, pinion
+                { name: "module_or_dp", type: "string" }, // stores 'module' or 'dp'
+                { name: "cutter_number", type: "number" }, // stores 3.5, 8, etc.
                 { name: "teeth_count", type: "number" },
-                { name: "helix_angle", type: "number" },
-                { name: "pitch", type: "number", isOptional: true },
+                { name: "helix_angle", type: "string" },
                 { name: "calculated_od", type: "number" },
+                { name: "out_dia", type: "number", isOptional: true },
                 { name: "face_width", type: "number", isOptional: true },
-                { name: "pressure_angle", type: "number", isOptional: true },
                 { name: "hand", type: "string", isOptional: true },
+                { name: "notes", type: "string", isOptional: true },
+            ],
+        }),
+        tableSchema({
+            name: "worm_wheel_specifications",
+            columns: [
+                { name: "order_id", type: "string", isIndexed: true },
+                { name: "version_number", type: "number" },
+                { name: "is_current_version", type: "boolean" },
+                { name: "out_dia", type: "number" },
+                { name: "throat_dia", type: "number" },
+                { name: "pitch", type: "number", isOptional: true },
+                { name: "module_or_dp", type: "string" }, // 'module' or 'dp'
+                { name: "cutter_number", type: "number" }, // 3.5, 8, etc.
+                { name: "starts", type: "number" }, // start of cutter
+                { name: "worm_dia", type: "number" },
+                { name: "teeth_count", type: "number" },
+                { name: "wheel_angle", type: "string" }, // degrees/minutes
+                { name: "hand", type: "string", isOptional: true },
+                { name: "notes", type: "string", isOptional: true },
             ],
         }),
         tableSchema({
             name: "production_setups",
             columns: [
                 { name: "machine_id", type: "string", isIndexed: true },
-                { name: "spec_id", type: "string", isIndexed: true },
+                { name: "order_id", type: "string", isIndexed: true },
                 { name: "cutter_id", type: "string", isIndexed: true },
                 { name: "gear_a", type: "number" },
                 { name: "gear_b", type: "number" },
@@ -127,6 +149,22 @@ export default appSchema({
                 { name: "product_name", type: "string" },
                 { name: "total_quantity", type: "number" },
                 { name: "dispatched_quantity", type: "number" },
+                { name: "rate", type: "number", isOptional: true },
+                { name: "created_at", type: "number" },
+            ],
+        }),
+        tableSchema({
+            name: "records",
+            columns: [
+                { name: "product_id", type: "string", isIndexed: true },
+                { name: "machine_id", type: "string", isIndexed: true },
+                { name: "quantity_cut", type: "number" },
+                { name: "rate_per_pc", type: "number" },
+                { name: "total_money", type: "number" },
+                { name: "gear_a", type: "number", isOptional: true },
+                { name: "gear_b", type: "number", isOptional: true },
+                { name: "gear_c", type: "number", isOptional: true },
+                { name: "gear_d", type: "number", isOptional: true },
                 { name: "created_at", type: "number" },
             ],
         }),
